@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
-import { Server } from "http";
 
+import { Server } from "http";
 import app from "./app";
 import { prisma } from "./app/shared/prisma";
 import { envVars } from "./config/env";
+import { seedAdmin } from "./seed/seedAdmin";
 
 
 
@@ -26,7 +26,7 @@ const startServer = async () => {
 (async () => {
 
   await startServer();
-  // await seedAdmin();
+  await seedAdmin();
 })();
 
 process.on("unhandledRejection", (err) => {
