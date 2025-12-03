@@ -10,4 +10,14 @@ model User {
    location           String?
    createdAt          DateTime @default(now())
    updatedAt          DateTime @updatedAt
+   
+   createdEvents      Event[]
+   eventParticipants  EventParticipant[]
+   reviewsGiven       Review[]   @relation("ReviewsGiven")
+   reviewsReceived    Review[]   @relation("ReviewsReceived")
+   payments           Payment[]
+   friends            Friend[]   @relation("UserFriends")
+   friendOf           Friend[]   @relation("FriendOf")
+
+   @@map("users")
 }

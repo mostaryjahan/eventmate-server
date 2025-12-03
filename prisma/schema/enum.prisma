@@ -3,3 +3,24 @@ enum UserRole {
   HOST
   USER
 }
+
+enum EventStatus {
+  OPEN
+  FULL
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}

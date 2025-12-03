@@ -23,13 +23,13 @@ const login = async (payload: { email: string; password: string }) => {
   }
 
   const accessToken = generateToken(
-    { email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: user.role },
     envVars.JWT_ACCESS_SECRET,
     envVars.JWT_ACCESS_EXPIRY
   );
 
   const refreshToken = generateToken(
-    { email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: user.role },
     envVars.JWT_REFRESH_SECRET,
     envVars.JWT_REFRESH_EXPIRY
   );
@@ -59,6 +59,7 @@ const refreshToken = async (token: string) => {
 
   const accessToken = generateToken(
     {
+      id: userData.id,
       email: userData.email,
       role: userData.role,
     },

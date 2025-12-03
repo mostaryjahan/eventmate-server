@@ -1,0 +1,70 @@
+model Event {
+   id              String      @id @default(uuid())
+   name            String
+   type            String
+   description     String?
+   dateTime        DateTime
+   location        String?
+   image           String?
+   minParticipants Int         @default(1)
+   maxParticipants Int?
+   joiningFee      Float       @default(0.0)
+   status          EventStatus @default(OPEN)
+   createdBy       String
+   creator         User        @relation(fields: [createdBy], references: [id])
+   createdAt       DateTime    @default(now())
+   updatedAt       DateTime    @updatedAt
+
+   participants    EventParticipant[]
+   reviews         Review[]
+   payments        Payment[]
+
+   @@map("events")
+}
+
+model EventParticipant {
+   id        String   @id @default(uuid())
+   eventId   String
+   userId    String
+   joinedAt  DateTime @default(now())
+   
+   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   
+   @@unique([eventId, userId])
+   @@map("event_participants")
+}
+
+model Review {
+   id        String   @id @default(uuid())
+   rating    Int      @db.SmallInt
+   comment   String?
+   eventId   String
+   reviewerId String
+   hostId    String
+   createdAt DateTime @default(now())
+   
+   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+   reviewer  User     @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+   host      User     @relation("ReviewsReceived", fields: [hostId], references: [id], onDelete: Cascade)
+   
+   @@unique([eventId, reviewerId])
+   @@map("reviews")
+}
+
+model Payment {
+   id                  String        @id @default(uuid())
+   amount              Float
+   status              PaymentStatus @default(PENDING)
+   stripeSessionId     String?       @unique
+   paymentGatewayData  Json?
+   eventId             String
+   userId              String
+   createdAt           DateTime      @default(now())
+   updatedAt           DateTime      @updatedAt
+   
+   event               Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+   user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+   
+   @@map("payments")
+}
