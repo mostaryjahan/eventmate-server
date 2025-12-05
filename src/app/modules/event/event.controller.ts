@@ -5,6 +5,14 @@ import { EventService } from "./event.service";
 import httpStatus from "http-status-codes";
 import pick from "../../helpers/pick";
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
 
 
 
@@ -53,9 +61,9 @@ const updateEvent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const deleteEvent = catchAsync(async (req: Request, res: Response) => {
+const deleteEvent = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
-  const result = await EventService.deleteEvent(id, req.user.id, req.user.role);
+  const result = await EventService.deleteEvent(id, req.user!.id, req.user!.role);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -64,9 +72,9 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const joinEvent = catchAsync(async (req: Request, res: Response) => {
+const joinEvent = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
-  const result = await EventService.joinEvent(id, req.user.id);
+  const result = await EventService.joinEvent(id, req.user!.id);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -75,9 +83,9 @@ const joinEvent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const leaveEvent = catchAsync(async (req: Request, res: Response) => {
+const leaveEvent = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
-  const result = await EventService.leaveEvent(id, req.user.id);
+  const result = await EventService.leaveEvent(id, req.user!.id);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
