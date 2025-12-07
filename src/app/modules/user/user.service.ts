@@ -129,13 +129,43 @@ const getAllUsers = async (params: any, options: IOptions) => {
 // get user by id
 const getUserById = async (id: string) => {
   const result = await prisma.user.findUnique({ where: { id } });
-  return result;
+  if (!result) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  const { password, ...user } = result;
+  return user;
 };
 
+// update my profile
+const updateMyProfile = async (req: any) => {
+  const userId = req.user.id;
+ 
+  let bodyData = { ...req.body };
+ 
+
+  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existingUser) throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+
+  const profileImage = req.file?.path;
+  if (profileImage) {
+    bodyData.image = profileImage;
+  }
+
+  if (bodyData.interests && typeof bodyData.interests === 'string') {
+    bodyData.interests = bodyData.interests.split(',').map((item: string) => item.trim()).filter(Boolean);
+  }
+
+  const result = await prisma.user.update({
+    where: { id: userId },
+    data: bodyData,
+  });
+
+  const { password: _, ...updatedUser } = result;
+  return updatedUser;
+};
 
 export const UserService = {
   createUser,
   updateUser,
   getAllUsers,
-  getUserById
+  getUserById,
+  updateMyProfile
 };

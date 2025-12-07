@@ -52,9 +52,21 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+// update my profile
+const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.updateMyProfile(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Profile updated successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
     createUser,
     updateUser,
     getAllUsers,
-    getUserById
+    getUserById,
+    updateMyProfile
 }
