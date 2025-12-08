@@ -7,15 +7,17 @@ import httpStatus from "http-status-codes";
 const createEvent = async (req: any) => {
   const bodyData = req.body.data ? JSON.parse(req.body.data) : req.body;
  
-  const { name, type, description, dateTime, location, minParticipants, maxParticipants, joiningFee } = bodyData;
+  const { name, typeId, description, dateTime, location, minParticipants, maxParticipants, joiningFee } = bodyData;
+  
+  const eventType = await prisma.eventType.findUnique({ where: { id: typeId } });
+  if (!eventType) throw new AppError(httpStatus.NOT_FOUND, "Event type not found");
   
   const eventImage = req.file?.path;
  
-  
   const result = await prisma.event.create({
     data: {
       name,
-      type,
+      typeId,
       description,
       dateTime: new Date(dateTime),
       location,
@@ -26,6 +28,7 @@ const createEvent = async (req: any) => {
       createdBy: req.user.id,
     },
     include: {
+      type: true,
       creator: { select: { id: true, name: true, email: true } },
       participants: true,
     },
@@ -45,12 +48,11 @@ const getAllEvents = async (params: any, options: IOptions) => {
       OR: [
         { name: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { type: { contains: search, mode: "insensitive" } },
       ],
     });
   }
 
-  if (type) andConditions.push({ type: { contains: type, mode: "insensitive" } });
+  if (type) andConditions.push({ typeId: type });
   if (location) andConditions.push({ location: { contains: location, mode: "insensitive" } });
   if (status) andConditions.push({ status });
 
@@ -62,8 +64,49 @@ const getAllEvents = async (params: any, options: IOptions) => {
     where: whereConditions,
     orderBy: { [sortBy]: sortOrder },
     include: {
+      type: true,
       creator: { select: { id: true, name: true, email: true } },
-      participants: { include: { user: { select: { id: true, name: true } } } },
+      _count: { select: { participants: true } },
+    },
+  });
+
+  const total = await prisma.event.count({ where: whereConditions });
+
+  return {
+    meta: { page, limit, total },
+    data: result,
+  };
+};
+
+const getMyHostedEvents = async (userId: string, params: any, options: IOptions) => {
+  const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(options);
+  const { search, type, location, status } = params;
+
+  const andConditions: Prisma.EventWhereInput[] = [{ createdBy: userId }];
+
+  if (search) {
+    andConditions.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (type) andConditions.push({ typeId: type });
+  if (location) andConditions.push({ location: { contains: location, mode: "insensitive" } });
+  if (status) andConditions.push({ status });
+
+  const whereConditions: Prisma.EventWhereInput = { AND: andConditions };
+
+  const result = await prisma.event.findMany({
+    skip,
+    take: limit,
+    where: whereConditions,
+    orderBy: { [sortBy]: sortOrder },
+    include: {
+      type: true,
+      creator: { select: { id: true, name: true, email: true } },
       _count: { select: { participants: true } },
     },
   });
@@ -80,6 +123,7 @@ const getEventById = async (id: string) => {
   const result = await prisma.event.findUnique({
     where: { id },
     include: {
+      type: true,
       creator: { select: { id: true, name: true, email: true, image: true } },
       participants: { include: { user: { select: { id: true, name: true, image: true } } } },
       reviews: { include: { reviewer: { select: { id: true, name: true } } } },
@@ -101,6 +145,11 @@ const updateEvent = async (id: string, req: any) => {
     throw new AppError(httpStatus.FORBIDDEN, "Not authorized to update this event");
   }
 
+  if (bodyData.typeId) {
+    const eventType = await prisma.eventType.findUnique({ where: { id: bodyData.typeId } });
+    if (!eventType) throw new AppError(httpStatus.NOT_FOUND, "Event type not found");
+  }
+
   const eventImage = req.file?.path || event.image;
 
   const result = await prisma.event.update({
@@ -111,6 +160,7 @@ const updateEvent = async (id: string, req: any) => {
       dateTime: bodyData.dateTime ? new Date(bodyData.dateTime) : event.dateTime,
     },
     include: {
+      type: true,
       creator: { select: { id: true, name: true, email: true } },
       participants: true,
     },
@@ -192,6 +242,7 @@ const leaveEvent = async (eventId: string, userId: string) => {
 export const EventService = {
   createEvent,
   getAllEvents,
+  getMyHostedEvents,
   getEventById,
   updateEvent,
   deleteEvent,

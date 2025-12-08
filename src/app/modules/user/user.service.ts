@@ -7,23 +7,33 @@ import { Prisma, UserRole } from "@prisma/client";
 import { userSearchableFields } from "./user.constant";
 import { IOptions, paginationHelper } from "../../helpers/paginationHelpers";
 
-
-// register new user 
+// register new user
 const createUser = async (req: any) => {
-  
   let bodyData = req.body.data ? JSON.parse(req.body.data) : req.body;
 
-  const { email, password, name, role = UserRole.USER, bio, interests, location } = bodyData;
+  const {
+    email,
+    password,
+    name,
+    role = UserRole.USER,
+    bio,
+    interests,
+    location,
+  } = bodyData;
 
   // check existing user
   const existingUser = await prisma.user.findUnique({ where: { email } });
-  
-  if (existingUser) throw new AppError(httpStatus.BAD_REQUEST, "Email already exists");
 
-  const hashedPassword = await bcrypt.hash(password, Number(envVars.BCRYPT_SALT_ROUND));
+  if (existingUser)
+    throw new AppError(httpStatus.BAD_REQUEST, "Email already exists");
+
+  const hashedPassword = await bcrypt.hash(
+    password,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
 
   // handle file if uploaded
-  const profileImage = req.file?.path; 
+  const profileImage = req.file?.path;
 
   const result = await prisma.user.create({
     data: {
@@ -42,18 +52,18 @@ const createUser = async (req: any) => {
   return newUser;
 };
 
-
 // update user
 const updateUser = async (req: any) => {
   const { id } = req.params;
-  const bodyData ={ ...req.body };
+  const bodyData = { ...req.body };
 
-  const existingUser = await prisma.user.findUnique({ where: { id }});
+  const existingUser = await prisma.user.findUnique({ where: { id } });
 
-  if (!existingUser) throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+  if (!existingUser)
+    throw new AppError(httpStatus.BAD_REQUEST, "User not found");
 
   if (req.user.role !== "admin") {
-    delete bodyData.role;  
+    delete bodyData.role;
   }
 
   const result = await prisma.user.update({
@@ -64,7 +74,6 @@ const updateUser = async (req: any) => {
   const { password: _, ...newUser } = result;
   return newUser;
 };
-
 
 // get all users
 const getAllUsers = async (params: any, options: IOptions) => {
@@ -85,7 +94,7 @@ const getAllUsers = async (params: any, options: IOptions) => {
     });
   }
 
-    if (Object.keys(filterData).length > 0) {
+  if (Object.keys(filterData).length > 0) {
     andConditions.push({
       AND: Object.keys(filterData).map((key) => ({
         [key]: {
@@ -102,7 +111,7 @@ const getAllUsers = async (params: any, options: IOptions) => {
         }
       : {};
 
-      const result = await prisma.user.findMany({
+  const result = await prisma.user.findMany({
     skip,
     take: limit,
 
@@ -125,7 +134,6 @@ const getAllUsers = async (params: any, options: IOptions) => {
   };
 };
 
-
 // get user by id
 const getUserById = async (id: string) => {
   const result = await prisma.user.findUnique({ where: { id } });
@@ -137,20 +145,23 @@ const getUserById = async (id: string) => {
 // update my profile
 const updateMyProfile = async (req: any) => {
   const userId = req.user.id;
- 
+
   let bodyData = { ...req.body };
- 
 
   const existingUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!existingUser) throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+  if (!existingUser)
+    throw new AppError(httpStatus.BAD_REQUEST, "User not found");
 
   const profileImage = req.file?.path;
   if (profileImage) {
     bodyData.image = profileImage;
   }
 
-  if (bodyData.interests && typeof bodyData.interests === 'string') {
-    bodyData.interests = bodyData.interests.split(',').map((item: string) => item.trim()).filter(Boolean);
+  if (bodyData.interests && typeof bodyData.interests === "string") {
+    bodyData.interests = bodyData.interests
+      .split(",")
+      .map((item: string) => item.trim())
+      .filter(Boolean);
   }
 
   const result = await prisma.user.update({
@@ -162,10 +173,38 @@ const updateMyProfile = async (req: any) => {
   return updatedUser;
 };
 
+// update role user to host
+const updateRole = async (req: any) => {
+  const userId = req.user.id;
+  const bodyData = { ...req.body };
+
+  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!existingUser)
+    throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+  const result = await prisma.user.update({
+    where: { id: userId },
+    data: bodyData,
+  });
+  const { password: _, ...updatedUser } = result;
+  return updatedUser;
+};
+
+
+// delete user
+const deleteUser = async (id: string) => {
+  const result = await prisma.user.delete({ where: { id } });
+  if (!result) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  return result;
+};
+
+
 export const UserService = {
   createUser,
   updateUser,
   getAllUsers,
   getUserById,
-  updateMyProfile
+  updateMyProfile,
+  updateRole,
+  deleteUser,
 };

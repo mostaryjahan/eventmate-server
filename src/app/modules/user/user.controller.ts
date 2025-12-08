@@ -63,10 +63,37 @@ const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+// update role user to host
+const updateRole = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.updateRole(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Role updated successfully",
+    data: result,
+  });
+});
+
+
+// delete user
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await UserService.deleteUser(id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User deleted successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
     createUser,
     updateUser,
     getAllUsers,
     getUserById,
-    updateMyProfile
+    updateMyProfile,
+    updateRole,
+    deleteUser
 }

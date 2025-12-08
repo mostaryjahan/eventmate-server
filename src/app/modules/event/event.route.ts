@@ -14,6 +14,7 @@ router.post(
 );
 
 router.get("/", EventController.getAllEvents);
+router.get("/my-events", checkAuth(UserRole.HOST), EventController.getMyHostedEvents);
 router.get("/:id", EventController.getEventById);
 
 router.put(

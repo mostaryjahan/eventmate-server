@@ -18,4 +18,9 @@ router.patch("/update-my-profile", checkAuth(UserRole.USER, UserRole.HOST, UserR
 
 router.patch("/:id",parseFormData, validateRequest(updateUserZodSchema), UserController.updateUser);
 
+
+router.patch("/update-role/:id", checkAuth(UserRole.ADMIN), parseFormData, UserController.updateRole);
+
+router.delete("/:id", checkAuth(UserRole.ADMIN), UserController.deleteUser);
+
 export const userRoutes = router;

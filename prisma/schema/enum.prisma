@@ -18,7 +18,6 @@ enum PaymentStatus {
   REFUNDED
 }
 
-
 enum FriendStatus {
   PENDING
   ACCEPTED

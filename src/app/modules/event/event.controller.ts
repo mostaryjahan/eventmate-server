@@ -39,6 +39,19 @@ const getAllEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMyHostedEvents = catchAsync(async (req: AuthenticatedRequest, res: Response) => {
+  const filters = pick(req.query, ["search", "type", "location", "status"]);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await EventService.getMyHostedEvents(req.user!.id, filters, options);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My hosted events retrieved successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 const getEventById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await EventService.getEventById(id);
@@ -97,6 +110,7 @@ const leaveEvent = catchAsync(async (req: AuthenticatedRequest, res: Response) =
 export const EventController = {
   createEvent,
   getAllEvents,
+  getMyHostedEvents,
   getEventById,
   updateEvent,
   deleteEvent,

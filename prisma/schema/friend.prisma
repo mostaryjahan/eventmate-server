@@ -1,14 +1,12 @@
-
 model Friend {
-   id         String      @id @default(uuid())
-   userId     String
-   friendId   String
-   status     FriendStatus @default(PENDING)
-   createdAt  DateTime    @default(now())
-   
-   user       User        @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
-   friend     User        @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
-   
-   @@unique([userId, friendId])
-   @@map("friends")
+  id        String       @id @default(uuid())
+  userId    String
+  friendId  String
+  status    FriendStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  friend    User         @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User         @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friends")
 }
