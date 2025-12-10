@@ -23,3 +23,9 @@ enum FriendStatus {
   ACCEPTED
   BLOCKED
 }
+
+enum HostApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

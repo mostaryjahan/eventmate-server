@@ -23,4 +23,17 @@ router.patch("/update-role/:id", checkAuth(UserRole.ADMIN), parseFormData, UserC
 
 router.delete("/:id", checkAuth(UserRole.ADMIN), UserController.deleteUser);
 
+router.post("/apply-for-host", checkAuth(UserRole.USER), UserController.applyForHost);
+
+// Admin routes for host applications
+router.get("/admin/host-applications", checkAuth(UserRole.ADMIN), UserController.getAllHostApplications);
+router.patch("/admin/host-applications/:userId/approve", checkAuth(UserRole.ADMIN), UserController.approveHostApplication);
+router.patch("/admin/host-applications/:userId/reject", checkAuth(UserRole.ADMIN), UserController.rejectHostApplication);
+
+// Saved events routes
+router.post("/save-event", checkAuth(UserRole.USER, UserRole.HOST), UserController.saveEvent);
+router.delete("/unsave-event/:eventId", checkAuth(UserRole.USER, UserRole.HOST), UserController.unsaveEvent);
+router.get("/saved-events", checkAuth(UserRole.USER, UserRole.HOST), UserController.getSavedEvents);
+router.get("/check-saved/:eventId", checkAuth(UserRole.USER, UserRole.HOST), UserController.checkEventSaved);
+
 export const userRoutes = router;

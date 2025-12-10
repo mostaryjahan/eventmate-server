@@ -1,0 +1,11 @@
+model SavedEvent {
+  id      String   @id @default(uuid())
+  userId  String
+  eventId String
+  savedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("saved_events")
+}

@@ -94,13 +94,30 @@ const getFriendsEvents = async (userId: string) => {
 
   const friendIds = friends.map(f => f.friendId);
 
+  // Get events created by friends OR events where friends are participants
   const events = await prisma.event.findMany({
-    where: { createdBy: { in: friendIds } },
+    where: {
+      OR: [
+        { createdBy: { in: friendIds } }, // Events created by friends
+        { 
+          participants: {
+            some: { userId: { in: friendIds } } // Events where friends are participants
+          }
+        }
+      ]
+    },
     include: {
       creator: { select: { id: true, name: true, image: true } },
+      type: { select: { id: true, name: true } },
+      participants: {
+        where: { userId: { in: friendIds } },
+        include: {
+          user: { select: { id: true, name: true, image: true } }
+        }
+      },
       _count: { select: { participants: true } }
     },
-    orderBy: { createdAt: "desc" }
+    orderBy: { dateTime: "desc" }
   });
 
   return events;

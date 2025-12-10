@@ -30,7 +30,7 @@ router.patch(
 router.delete("/:id", checkAuth(UserRole.HOST || UserRole.ADMIN), EventController.deleteEvent);
 
 // Event participation routes
-router.get("/:id/participants", checkAuth(), EventController.getParticipants);
+router.get("/:id/participants", EventController.getParticipants);
 router.post("/:id/join", checkAuth(), EventController.joinEvent);
 router.delete("/:id/leave", checkAuth(), EventController.leaveEvent);
 

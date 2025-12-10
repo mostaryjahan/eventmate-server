@@ -17,6 +17,8 @@ model User {
   payments          Payment[]
   reviewsReceived   Review[]           @relation("ReviewsReceived")
   reviewsGiven      Review[]           @relation("ReviewsGiven")
+  hostApplication   HostApplication?
+  savedEvents       SavedEvent[]
 
   @@map("users")
 }

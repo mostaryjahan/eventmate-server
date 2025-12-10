@@ -1,0 +1,10 @@
+model HostApplication {
+  id        String                @id @default(uuid())
+  userId    String                @unique
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    HostApplicationStatus @default(PENDING)
+  appliedAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@map("host_applications")
+}

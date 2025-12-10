@@ -30,7 +30,7 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
 
 // get all users
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.getAllUsers(req.query, req.query);
+  const result = await UserService.getAllUsers();
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -88,6 +88,96 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// apply for host
+const applyForHost = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.applyForHost(req);
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Host application submitted successfully. Please wait for admin approval.",
+    data: result,
+  });
+});
+
+// get all host applications
+const getAllHostApplications = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getAllHostApplications();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Host applications retrieved successfully",
+    data: result,
+  });
+});
+
+// approve host application
+const approveHostApplication = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const result = await UserService.approveHostApplication(userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Host application approved successfully",
+    data: result,
+  });
+});
+
+// reject host application
+const rejectHostApplication = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const result = await UserService.rejectHostApplication(userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Host application rejected",
+    data: result,
+  });
+});
+
+// save event
+const saveEvent = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.saveEvent(req);
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Event saved successfully",
+    data: result,
+  });
+});
+
+// unsave event
+const unsaveEvent = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.unsaveEvent(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Event unsaved successfully",
+    data: result,
+  });
+});
+
+// get saved events
+const getSavedEvents = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getSavedEvents(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Saved events retrieved successfully",
+    data: result,
+  });
+});
+
+// check if event is saved
+const checkEventSaved = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.checkEventSaved(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Event saved status retrieved successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
     createUser,
     updateUser,
@@ -95,5 +185,13 @@ export const UserController = {
     getUserById,
     updateMyProfile,
     updateRole,
-    deleteUser
+    deleteUser,
+    applyForHost,
+    getAllHostApplications,
+    approveHostApplication,
+    rejectHostApplication,
+    saveEvent,
+    unsaveEvent,
+    getSavedEvents,
+    checkEventSaved
 }

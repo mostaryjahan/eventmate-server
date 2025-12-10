@@ -18,6 +18,7 @@ model Event {
   type            EventType         @relation(fields: [typeId], references: [id])
   payments        Payment[]
   reviews         Review[]
+  savedByUsers    SavedEvent[]
 
   @@map("events")
 }

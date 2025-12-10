@@ -75,63 +75,13 @@ const updateUser = async (req: any) => {
   return newUser;
 };
 
-// get all users
-const getAllUsers = async (params: any, options: IOptions) => {
-  const { page, limit, skip, sortBy, sortOrder } =
-    paginationHelper.calculatePagination(options);
-  const { search, ...filterData } = params;
 
-  const andConditions: Prisma.UserWhereInput[] = [];
-
-  if (search) {
-    andConditions.push({
-      OR: userSearchableFields.map((field) => ({
-        [field]: {
-          contains: search,
-          mode: "insensitive",
-        },
-      })),
-    });
-  }
-
-  if (Object.keys(filterData).length > 0) {
-    andConditions.push({
-      AND: Object.keys(filterData).map((key) => ({
-        [key]: {
-          equals: (filterData as any)[key],
-        },
-      })),
-    });
-  }
-
-  const whereConditions: Prisma.UserWhereInput =
-    andConditions.length > 0
-      ? {
-          AND: andConditions,
-        }
-      : {};
-
-  const result = await prisma.user.findMany({
-    skip,
-    take: limit,
-
-    where: whereConditions,
-    orderBy: {
-      [sortBy]: sortOrder,
-    },
+const getAllUsers = async () => {
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
   });
 
-  const total = await prisma.user.count({
-    where: whereConditions,
-  });
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-    },
-    data: result,
-  };
+  return users;
 };
 
 // get user by id
@@ -175,15 +125,15 @@ const updateMyProfile = async (req: any) => {
 
 // update role user to host
 const updateRole = async (req: any) => {
-  const userId = req.user.id;
+  const { id } = req.params;
   const bodyData = { ...req.body };
 
-  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+  const existingUser = await prisma.user.findUnique({ where: { id } });
 
   if (!existingUser)
     throw new AppError(httpStatus.BAD_REQUEST, "User not found");
   const result = await prisma.user.update({
-    where: { id: userId },
+    where: { id },
     data: bodyData,
   });
   const { password: _, ...updatedUser } = result;
@@ -199,6 +149,165 @@ const deleteUser = async (id: string) => {
 };
 
 
+// apply for host
+const applyForHost = async (req: any) => {
+  const userId = req.user.id;
+  
+  const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existingUser) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+  
+  if (existingUser.role === UserRole.HOST) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is already a host");
+  }
+  
+  const existingApplication = await prisma.hostApplication.findUnique({ where: { userId } });
+  if (existingApplication) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Host application already exists");
+  }
+  
+  const result = await prisma.hostApplication.create({
+    data: { userId }
+  });
+  
+  return result;
+};
+
+// get all host applications
+const getAllHostApplications = async () => {
+  const applications = await prisma.hostApplication.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true
+        }
+      }
+    },
+    orderBy: { appliedAt: "desc" }
+  });
+
+  return applications;
+};
+
+// approve host application
+const approveHostApplication = async (userId: string) => {
+  const application = await prisma.hostApplication.findUnique({ where: { userId } });
+  if (!application) {
+    throw new AppError(httpStatus.NOT_FOUND, "Host application not found");
+  }
+
+  await prisma.$transaction([
+    prisma.hostApplication.update({
+      where: { userId },
+      data: { status: "APPROVED" }
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: { role: UserRole.HOST }
+    })
+  ]);
+  
+  return { message: "Host application approved successfully" };
+};
+
+// reject host application
+const rejectHostApplication = async (userId: string) => {
+  const application = await prisma.hostApplication.findUnique({ where: { userId } });
+  if (!application) {
+    throw new AppError(httpStatus.NOT_FOUND, "Host application not found");
+  }
+
+  await prisma.hostApplication.update({
+    where: { userId },
+    data: { status: "REJECTED" }
+  });
+  
+  return { message: "Host application rejected" };
+};
+
+// save event
+const saveEvent = async (req: any) => {
+  const userId = req.user.id;
+  const { eventId } = req.body;
+
+  const existingEvent = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!existingEvent) {
+    throw new AppError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  const existingSave = await prisma.savedEvent.findUnique({
+    where: { userId_eventId: { userId, eventId } }
+  });
+  
+  if (existingSave) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Event already saved");
+  }
+
+  const result = await prisma.savedEvent.create({
+    data: { userId, eventId }
+  });
+
+  return result;
+};
+
+// unsave event
+const unsaveEvent = async (req: any) => {
+  const userId = req.user.id;
+  const { eventId } = req.params;
+
+  const existingSave = await prisma.savedEvent.findUnique({
+    where: { userId_eventId: { userId, eventId } }
+  });
+  
+  if (!existingSave) {
+    throw new AppError(httpStatus.NOT_FOUND, "Saved event not found");
+  }
+
+  await prisma.savedEvent.delete({
+    where: { userId_eventId: { userId, eventId } }
+  });
+
+  return { message: "Event unsaved successfully" };
+};
+
+// get saved events
+const getSavedEvents = async (req: any) => {
+  const userId = req.user.id;
+
+  const savedEvents = await prisma.savedEvent.findMany({
+    where: { userId },
+    include: {
+      event: {
+        include: {
+          type: true,
+          _count: {
+            select: { participants: true }
+          }
+        }
+      }
+    },
+    orderBy: { savedAt: "desc" }
+  });
+
+  return savedEvents.map(saved => saved.event);
+};
+
+// check if event is saved
+const checkEventSaved = async (req: any) => {
+  const userId = req.user.id;
+  const { eventId } = req.params;
+
+  const savedEvent = await prisma.savedEvent.findUnique({
+    where: { userId_eventId: { userId, eventId } }
+  });
+
+  return { isSaved: !!savedEvent };
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -207,4 +316,12 @@ export const UserService = {
   updateMyProfile,
   updateRole,
   deleteUser,
+  applyForHost,
+  getAllHostApplications,
+  approveHostApplication,
+  rejectHostApplication,
+  saveEvent,
+  unsaveEvent,
+  getSavedEvents,
+  checkEventSaved,
 };
