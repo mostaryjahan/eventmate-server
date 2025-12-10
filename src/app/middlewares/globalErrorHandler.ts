@@ -19,12 +19,12 @@ const globalErrorHandler = (
       error = error.meta;
       statusCode = httpStatus.CONFLICT;
     }
-    if ((err.code = "P1000")) {
+    if (err.code === "P1000") {
       message = "Authentication error";
       error = error.meta;
       statusCode = httpStatus.UNAUTHORIZED;
     }
-    if ((err.code = "P2003")) {
+    if (err.code === "P2003") {
       message = "Foreign key error";
       error = error.meta;
       statusCode = httpStatus.BAD_REQUEST;

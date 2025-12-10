@@ -3,6 +3,7 @@ import { EventController } from "./event.controller";
 import { multerUpload } from "../../../config/multer.config";
 import checkAuth from "../../middlewares/checkAuth";
 import { UserRole } from "@prisma/client";
+import { PaymentController } from "../payment/payment.controller";
 
 const router = express.Router();
 
@@ -14,10 +15,13 @@ router.post(
 );
 
 router.get("/", EventController.getAllEvents);
+// for host
 router.get("/my-events", checkAuth(UserRole.HOST), EventController.getMyHostedEvents);
+// for user
+router.get("/my-event", checkAuth(), EventController.getMyJoinedEvents);
 router.get("/:id", EventController.getEventById);
 
-router.put(
+router.patch(
   "/:id",
   checkAuth(UserRole.HOST || UserRole.ADMIN),
   multerUpload.single("image"),
@@ -26,7 +30,11 @@ router.put(
 router.delete("/:id", checkAuth(UserRole.HOST || UserRole.ADMIN), EventController.deleteEvent);
 
 // Event participation routes
+router.get("/:id/participants", checkAuth(), EventController.getParticipants);
 router.post("/:id/join", checkAuth(), EventController.joinEvent);
 router.delete("/:id/leave", checkAuth(), EventController.leaveEvent);
+
+// Payment route
+router.post("/:id/initiate-payment", checkAuth(), PaymentController.createPaymentSession);
 
 export const eventRoutes = router;

@@ -16,7 +16,8 @@ const sendFriendRequest = catchAsync(async (req: Request, res: Response) => {
 });
 
 const acceptFriendRequest = catchAsync(async (req: Request, res: Response) => {
-  const { friendId } = req.params;
+  const { friendId } = req.body;
+  console.log("[acceptFriendRequest] userId:", req.user.id, "friendId:", friendId);
   const result = await FriendService.acceptFriendRequest(req.user.id, friendId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -46,6 +47,16 @@ const getFriendRequests = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSentFriendRequests = catchAsync(async (req: Request, res: Response) => {
+  const result = await FriendService.getSentFriendRequests(req.user.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Sent friend requests retrieved successfully",
+    data: result,
+  });
+});
+
 const getFriendsEvents = catchAsync(async (req: Request, res: Response) => {
   const result = await FriendService.getFriendsEvents(req.user.id);
   sendResponse(res, {
@@ -66,11 +77,24 @@ const removeFriend = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getFriendParticipatedEvents = catchAsync(async (req: Request, res: Response) => {
+  const { friendId } = req.params;
+  const result = await FriendService.getFriendParticipatedEvents(req.user.id, friendId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Friend participated events retrieved successfully",
+    data: result,
+  });
+});
+
 export const FriendController = {
   sendFriendRequest,
   acceptFriendRequest,
   getFriends,
   getFriendRequests,
+  getSentFriendRequests,
   getFriendsEvents,
   removeFriend,
+  getFriendParticipatedEvents,
 };

@@ -41,20 +41,48 @@ const acceptFriendRequest = async (userId: string, friendId: string) => {
 };
 
 const getFriends = async (userId: string) => {
+  // Get accepted friends
   const friends = await prisma.friend.findMany({
     where: { userId, status: FriendStatus.ACCEPTED },
-    include: { friend: { select: { id: true, name: true, image: true } } }
+    include: { friend: { select: { id: true, name: true, email: true, image: true } } }
   });
 
-  return friends;
+  // Get incoming requests (where user is receiver)
+  const requests = await prisma.friend.findMany({
+    where: { friendId: userId, status: FriendStatus.PENDING },
+    include: { user: { select: { id: true, name: true, email: true, image: true } } }
+  });
+
+  // Get sent requests (where user is sender)
+  const sentRequests = await prisma.friend.findMany({
+    where: { userId, status: FriendStatus.PENDING },
+    include: { friend: { select: { id: true, name: true, email: true, image: true } } }
+  });
+
+  console.log("[getFriends] Friends:", friends.length, "Requests:", requests.length, "Sent:", sentRequests.length);
+  
+  return {
+    friends: friends.map(f => f.friend),
+    requests: requests.map(r => r.user),
+    sentRequests: sentRequests.map(s => ({ ...s, friend: s.friend }))
+  };
 };
 
 const getFriendRequests = async (userId: string) => {
   const requests = await prisma.friend.findMany({
     where: { friendId: userId, status: FriendStatus.PENDING },
-    include: { user: { select: { id: true, name: true, image: true } } }
+    include: { user: { select: { id: true, name: true, email: true, image: true } } }
   });
+  console.log("[getFriendRequests] Incoming requests:", requests);
+  return requests;
+};
 
+const getSentFriendRequests = async (userId: string) => {
+  const requests = await prisma.friend.findMany({
+    where: { userId, status: FriendStatus.PENDING },
+    include: { friend: { select: { id: true, name: true, email: true, image: true } } }
+  });
+  console.log("[getSentFriendRequests] Sent requests:", requests);
   return requests;
 };
 
@@ -91,11 +119,42 @@ const removeFriend = async (userId: string, friendId: string) => {
   return { message: "Friend removed successfully" };
 };
 
+const getFriendParticipatedEvents = async (userId: string, friendId: string) => {
+  // Verify friendship
+  const friendship = await prisma.friend.findFirst({
+    where: {
+      userId,
+      friendId,
+      status: FriendStatus.ACCEPTED
+    }
+  });
+
+  if (!friendship) throw new AppError(httpStatus.FORBIDDEN, "Not friends with this user");
+
+  const events = await prisma.event.findMany({
+    where: {
+      participants: {
+        some: { userId: friendId }
+      }
+    },
+    include: {
+      creator: { select: { id: true, name: true, image: true } },
+      type: { select: { id: true, name: true } },
+      _count: { select: { participants: true } }
+    },
+    orderBy: { dateTime: "desc" }
+  });
+
+  return events;
+};
+
 export const FriendService = {
   sendFriendRequest,
   acceptFriendRequest,
   getFriends,
   getFriendRequests,
+  getSentFriendRequests,
   getFriendsEvents,
   removeFriend,
+  getFriendParticipatedEvents,
 };

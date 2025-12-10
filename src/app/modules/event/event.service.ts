@@ -6,25 +6,35 @@ import httpStatus from "http-status-codes";
 
 const createEvent = async (req: any) => {
   const bodyData = req.body.data ? JSON.parse(req.body.data) : req.body;
+
  
   const { name, typeId, description, dateTime, location, minParticipants, maxParticipants, joiningFee } = bodyData;
+ 
   
   const eventType = await prisma.eventType.findUnique({ where: { id: typeId } });
   if (!eventType) throw new AppError(httpStatus.NOT_FOUND, "Event type not found");
+
+  const minPart = Number(minParticipants) || 1;
+  const maxPart = Number(maxParticipants);
+  
+  if (minPart > maxPart) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Minimum participants cannot exceed maximum participants");
+  }
   
   const eventImage = req.file?.path;
  
   const result = await prisma.event.create({
     data: {
       name,
-      typeId,
       description,
       dateTime: new Date(dateTime),
       location,
       image: eventImage,
-      minParticipants: minParticipants || 1,
-      maxParticipants,
-      joiningFee: joiningFee || 0.0,
+      minParticipants: minPart,
+      maxParticipants: maxPart,
+      joiningFee: Number(joiningFee) || 0.0,
+      status: EventStatus.OPEN,
+      typeId,
       createdBy: req.user.id,
     },
     include: {
@@ -119,13 +129,56 @@ const getMyHostedEvents = async (userId: string, params: any, options: IOptions)
   };
 };
 
+const getMyJoinedEvents = async (userId: string, params: any, options: IOptions) => {
+  const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(options);
+  const { search, type, location, status } = params;
+
+  const andConditions: Prisma.EventWhereInput[] = [
+    { participants: { some: { userId } } }
+  ];
+
+  if (search) {
+    andConditions.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (type) andConditions.push({ typeId: type });
+  if (location) andConditions.push({ location: { contains: location, mode: "insensitive" } });
+  if (status) andConditions.push({ status });
+
+  const whereConditions: Prisma.EventWhereInput = { AND: andConditions };
+
+  const result = await prisma.event.findMany({
+    skip,
+    take: limit,
+    where: whereConditions,
+    orderBy: { [sortBy]: sortOrder },
+    include: {
+      type: true,
+      creator: { select: { id: true, name: true, email: true } },
+      _count: { select: { participants: true } },
+    },
+  });
+
+  const total = await prisma.event.count({ where: whereConditions });
+
+  return {
+    meta: { page, limit, total },
+    data: result,
+  };
+};
+
 const getEventById = async (id: string) => {
   const result = await prisma.event.findUnique({
     where: { id },
     include: {
       type: true,
       creator: { select: { id: true, name: true, email: true, image: true } },
-      participants: { include: { user: { select: { id: true, name: true, image: true } } } },
+      participants: { include: { user: { select: { id: true, name: true, email:true, image: true } } } },
       reviews: { include: { reviewer: { select: { id: true, name: true } } } },
       _count: { select: { participants: true } },
     },
@@ -239,13 +292,27 @@ const leaveEvent = async (eventId: string, userId: string) => {
   return { message: "Left event successfully" };
 };
 
+
+
+// get participants of an event
+const getParticipants = async (eventId: string) => {
+  const participants = await prisma.eventParticipant.findMany({
+    where: { eventId },
+    include: { user: { select: { id: true, name: true, email: true, bio:true, location: true, image: true,interests:true } } },
+  });
+
+  return participants;
+};
+
 export const EventService = {
   createEvent,
   getAllEvents,
   getMyHostedEvents,
+  getMyJoinedEvents,
   getEventById,
   updateEvent,
   deleteEvent,
   joinEvent,
   leaveEvent,
+  getParticipants,
 };

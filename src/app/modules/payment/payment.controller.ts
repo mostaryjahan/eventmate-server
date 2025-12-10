@@ -5,9 +5,17 @@ import { PaymentService } from "./payment.service";
 import httpStatus from "http-status-codes";
 import { stripe } from "../../../config/stripe";
 
+declare global {
+  namespace Express {
+    interface Request {
+      user: { id: string; role?: string };
+    }
+  }
+}
+
 const createPaymentSession = catchAsync(async (req: Request, res: Response) => {
-  const { eventId } = req.body;
-  const result = await PaymentService.createPaymentSession(eventId, req.user.id);
+  const { id } = req.params;
+  const result = await PaymentService.createPaymentSession(id, req.user.id);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -34,8 +42,20 @@ const getUserPayments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const verifyPayment = catchAsync(async (req: Request, res: Response) => {
+  const { sessionId } = req.query;
+  const result = await PaymentService.verifyPayment(sessionId as string, req.user.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Payment verified successfully",
+    data: result,
+  });
+});
+
 export const PaymentController = {
   createPaymentSession,
   handleWebhook,
   getUserPayments,
+  verifyPayment,
 };

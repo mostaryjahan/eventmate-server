@@ -15,7 +15,10 @@ const createType = async (req: any) => {
 
 
 const getAllTypes = async (params: any) => {
-  return await prisma.eventType.findMany({ orderBy: { name: "asc" } });
+  return await prisma.eventType.findMany({ 
+    include: { events: true },
+    orderBy: { name: "asc" } 
+  });
 };
 
 const updateType = async (id: string, req: any) => {
