@@ -48,7 +48,7 @@ const loadEnvVariables = (): EnvConfig => {
 
    return {
     PORT: process.env.PORT as string,
-    DATABASE_URL: process.env.DB_URL!,
+    DATABASE_URL: process.env.DATABASE_URL!,
     NODE_ENV: process.env.NODE_ENV as "development" | "production",
     ADMIN_EMAIL: process.env.ADMIN_EMAIL as string,
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD as string,
