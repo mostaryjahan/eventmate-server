@@ -3,6 +3,18 @@ import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
 import { EventStatus } from "@prisma/client";
 
+const getAllReviews = async () => {
+  const reviews = await prisma.review.findMany({
+    include: {
+      reviewer: { select: { id: true, name: true, image: true } },
+      event: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return reviews;
+};
+
 const createReview = async (payload: {
   rating: number;
   comment?: string;
@@ -122,6 +134,7 @@ const deleteReview = async (reviewId: string, userId: string, userRole: string) 
 };
 
 export const ReviewService = {
+  getAllReviews,
   createReview,
   getHostReviews,
   getEventReviews,

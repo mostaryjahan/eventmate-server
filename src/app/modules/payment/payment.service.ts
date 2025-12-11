@@ -26,8 +26,8 @@ const createPaymentSession = async (eventId: string, userId: string) => {
       quantity: 1,
     }],
     mode: "payment",
-    success_url: `${process.env.CLIENT_URL}/events/${eventId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.CLIENT_URL}/events/${eventId}?payment=cancelled`,
+    success_url: `${process.env.FRONTEND_URL}/events/${eventId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.FRONTEND_URL}/events/${eventId}?payment=cancelled`,
     metadata: { eventId, userId },
   });
 

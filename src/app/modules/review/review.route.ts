@@ -6,6 +6,7 @@ import { UserRole } from "@prisma/client";
 const router = express.Router();
 
 router.post("/", checkAuth(UserRole.USER, UserRole.ADMIN, UserRole.HOST), ReviewController.createReview);
+router.get("/", ReviewController.getAllReviews);
 router.get("/host/:hostId", ReviewController.getHostReviews);
 router.get("/event/:eventId", ReviewController.getEventReviews);
 router.put("/:id", checkAuth(UserRole.USER, UserRole.ADMIN), ReviewController.updateReview);
