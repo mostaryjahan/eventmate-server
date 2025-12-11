@@ -1,7 +1,15 @@
 node_modules
 .env
-dist
+
 build
 .log
 .logger
 /src/generated/prisma
+.vercel
+
+dist/
+
+.env.local
+uploads/*
+!uploads/.gitkeep
+*.log
