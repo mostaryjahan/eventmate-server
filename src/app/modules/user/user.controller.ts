@@ -178,6 +178,28 @@ const checkEventSaved = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// check host application status
+const checkHostApplicationStatus = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.checkHostApplicationStatus(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Host application status retrieved successfully",
+    data: result,
+  });
+});
+
+// cancel host application
+const cancelHostApplication = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.cancelHostApplication(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Host application cancelled successfully",
+    data: result,
+  });
+});
+
 export const UserController = {
     createUser,
     updateUser,
@@ -193,5 +215,7 @@ export const UserController = {
     saveEvent,
     unsaveEvent,
     getSavedEvents,
-    checkEventSaved
+    checkEventSaved,
+    checkHostApplicationStatus,
+    cancelHostApplication
 }

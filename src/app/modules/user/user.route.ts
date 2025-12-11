@@ -12,18 +12,12 @@ const router = express.Router();
 
 router.get("/", checkAuth(UserRole.ADMIN), UserController.getAllUsers);
 
-router.get("/:id", UserController.getUserById);
-
+// Specific routes first (before dynamic routes)
 router.patch("/update-my-profile", checkAuth(UserRole.USER, UserRole.HOST, UserRole.ADMIN), multerUpload.single('file'), parseFormData, UserController.updateMyProfile);
-
-router.patch("/:id",parseFormData, validateRequest(updateUserZodSchema), UserController.updateUser);
-
-
 router.patch("/update-role/:id", checkAuth(UserRole.ADMIN), parseFormData, UserController.updateRole);
-
-router.delete("/:id", checkAuth(UserRole.ADMIN), UserController.deleteUser);
-
 router.post("/apply-for-host", checkAuth(UserRole.USER), UserController.applyForHost);
+router.get("/host-application-status", checkAuth(UserRole.USER), UserController.checkHostApplicationStatus);
+router.delete("/cancel-host-application", checkAuth(UserRole.USER), UserController.cancelHostApplication);
 
 // Admin routes for host applications
 router.get("/admin/host-applications", checkAuth(UserRole.ADMIN), UserController.getAllHostApplications);
@@ -35,5 +29,10 @@ router.post("/save-event", checkAuth(UserRole.USER, UserRole.HOST), UserControll
 router.delete("/unsave-event/:eventId", checkAuth(UserRole.USER, UserRole.HOST), UserController.unsaveEvent);
 router.get("/saved-events", checkAuth(UserRole.USER, UserRole.HOST), UserController.getSavedEvents);
 router.get("/check-saved/:eventId", checkAuth(UserRole.USER, UserRole.HOST), UserController.checkEventSaved);
+
+// Dynamic routes last
+router.get("/:id", UserController.getUserById);
+router.patch("/:id",parseFormData, validateRequest(updateUserZodSchema), UserController.updateUser);
+router.delete("/:id", checkAuth(UserRole.ADMIN), UserController.deleteUser);
 
 export const userRoutes = router;

@@ -221,18 +221,19 @@ const rejectHostApplication = async (userId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Host application not found");
   }
 
-  await prisma.hostApplication.update({
-    where: { userId },
-    data: { status: "REJECTED" }
-  });
+  await prisma.hostApplication.delete({ where: { userId } });
   
   return { message: "Host application rejected" };
 };
 
 // save event
 const saveEvent = async (req: any) => {
-  const userId = req.user.id;
+  const userId = req.user?.id;
   const { eventId } = req.body;
+  
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
 
   const existingEvent = await prisma.event.findUnique({ where: { id: eventId } });
   if (!existingEvent) {
@@ -256,8 +257,13 @@ const saveEvent = async (req: any) => {
 
 // unsave event
 const unsaveEvent = async (req: any) => {
-  const userId = req.user.id;
+
+  const userId = req.user?.id;
   const { eventId } = req.params;
+  
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
 
   const existingSave = await prisma.savedEvent.findUnique({
     where: { userId_eventId: { userId, eventId } }
@@ -276,7 +282,11 @@ const unsaveEvent = async (req: any) => {
 
 // get saved events
 const getSavedEvents = async (req: any) => {
-  const userId = req.user.id;
+  const userId = req.user?.id;
+  
+  if (!userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
 
   const savedEvents = await prisma.savedEvent.findMany({
     where: { userId },
@@ -308,6 +318,29 @@ const checkEventSaved = async (req: any) => {
   return { isSaved: !!savedEvent };
 };
 
+// check host application status
+const checkHostApplicationStatus = async (req: any) => {
+  const userId = req.user.id;
+  
+  const application = await prisma.hostApplication.findUnique({ where: { userId } });
+  
+  return { hasApplied: !!application };
+};
+
+// cancel host application
+const cancelHostApplication = async (req: any) => {
+  const userId = req.user.id;
+  
+  const application = await prisma.hostApplication.findUnique({ where: { userId } });
+  if (!application) {
+    throw new AppError(httpStatus.NOT_FOUND, "Host application not found");
+  }
+  
+  await prisma.hostApplication.delete({ where: { userId } });
+  
+  return { message: "Host application cancelled successfully" };
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -324,4 +357,6 @@ export const UserService = {
   unsaveEvent,
   getSavedEvents,
   checkEventSaved,
+  checkHostApplicationStatus,
+  cancelHostApplication,
 };
