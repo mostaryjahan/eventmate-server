@@ -84,7 +84,7 @@ const getFriendParticipatedEvents = catchAsync(async (req: Request, res: Respons
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Friend participated events retrieved successfully",
+    message: "Friend participateddd events retrieved successfully",
     data: result,
   });
 });
