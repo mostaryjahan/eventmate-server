@@ -10,9 +10,9 @@ API server for EventMate event management platform with Prisma ORM and Stripe in
 
 ## Repository
 
-**Server Repository**: `git clone https://github.com/mostaryjahan/eventmate-server.git`
+**Server Repository**: `https://github.com/mostaryjahan/eventmate-server.git`
 
-**Frontend Repository**: `git clone https://github.com/mostaryjahan/eventmate-frontend.git`
+**Frontend Repository**: `https://github.com/mostaryjahan/eventmate-frontend.git`
 
 ## Tech Stack
 
@@ -28,6 +28,8 @@ API server for EventMate event management platform with Prisma ORM and Stripe in
 
 ### Installation
 ```bash
+git clone https://github.com/mostaryjahan/eventmate-server.git
+cd eventmate-server
 pnpm install
 ```
 

@@ -23,11 +23,11 @@ router.get("/:id", EventController.getEventById);
 
 router.patch(
   "/:id",
-  checkAuth(UserRole.HOST || UserRole.ADMIN),
+  checkAuth(),
   multerUpload.single("image"),
   EventController.updateEvent
 );
-router.delete("/:id", checkAuth(UserRole.HOST || UserRole.ADMIN), EventController.deleteEvent);
+router.delete("/:id", checkAuth(), EventController.deleteEvent);
 
 // Event participation routes
 router.get("/:id/participants", EventController.getParticipants);
