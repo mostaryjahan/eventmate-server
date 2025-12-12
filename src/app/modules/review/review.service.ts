@@ -31,7 +31,7 @@ const createReview = async (payload: {
 
   if (!event) throw new AppError(httpStatus.NOT_FOUND, "Event not found");
   if (event.status !== EventStatus.COMPLETED) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Can only review completed events");
+    throw new AppError(httpStatus.BAD_REQUEST, "Reviews are allowed only for completed events.");
   }
 
   // Check if user participated in the event
